@@ -1,10 +1,14 @@
 import { supabase } from "../supabase"
 
 export async function login() {
+    const redirectTo = window.location.hostname === "localhost"
+        ? "http://localhost:5173/ouistream/"
+        : "https://solidbug3.github.io/ouistream/"
+
     return await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-            redirectTo: "http://localhost:5173/ouistream/"
+            redirectTo
         }
     })
 }
