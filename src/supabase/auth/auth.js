@@ -14,7 +14,8 @@ export async function login() {
 }
 
 export async function logout() {
-    return await supabase.auth.signOut()
+    await supabase.auth.signOut()
+    window.location.href = window.location.origin + "/ouistream/"
 }
 
 export async function getUser() {

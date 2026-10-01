@@ -6,6 +6,8 @@ import SidePanel from "./components/SidePanel/SidePanel"
 import Home from "./pages/Home"
 import Profile from "./pages/Profile"
 
+import RequireAuth from "./supabase/auth/RequireAuth"
+
 function App() {
     return (
         <BrowserRouter basename="/ouistream">
@@ -14,7 +16,7 @@ function App() {
 
             <Routes>
                 <Route path="/" element={<Home />} />
-                <Route path="/profile" element={<Profile />} />
+                <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
             </Routes>
         </BrowserRouter>
     )

@@ -32,4 +32,9 @@
     .Content {
         grid-template-columns: 1fr;
     }
+
+    .Content-section {
+        margin-left: 40px;
+        padding: 30px;
+    }
 }

@@ -11,12 +11,9 @@ function SidePanel() {
     return (
         <div className="SidePanel">
             <Link className="SidePanel-item" to="/">⌂</Link>
-            <div className="SidePanel-item">▶</div>
-            <div className="SidePanel-item">♡</div>
-
             {user ? (<>
                 <Link className="SidePanel-item" to="/profile">⚙</Link>
-                <div className="SidePanel-item" onClick={auth.logout}>↪</div>
+                <div className="SidePanel-item" onClick={auth.logout}>x</div>
             </>) : (
                 <div className="SidePanel-item" onClick={auth.login}>⚙</div>
             )}

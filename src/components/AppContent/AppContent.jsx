@@ -14,13 +14,13 @@ import image8 from "../../assets/images/theater_thumbnail_8.png"
 
 function AppContent() {
     return (<div className = "AppContent">
-        <Content title="À voir" icon="▶">
+        <Content title="À voir" icon="♡">
             <Card title="Les Échos de Demain" produced="David Bernard" actors={["James Taylor", "Mia Roberts", "Noah White"]} image={image5} duration="1:42:35" />
             <Card title="La Grande Aventure" produced="Jean Dupont" actors={["Jean Dupont", "Marie Martin", "Lucas Bernard"]} image={image1} duration="2:15:08" />
             <Card title="Au-delà de l'Horizon" produced="Sophie Laurent" actors={["Emma Durand", "Thomas Moreau"]} image={image2} duration="58:42" />
         </Content>
 
-        <Content title="Toutes les pièces" icon="🎭">
+        <Content title="Toutes les pièces" icon="▶">
             <Card title="La Grande Aventure" produced="Jean Dupont" actors={["Jean Dupont", "Marie Martin", "Lucas Bernard"]} image={image1} duration="2:15:08" />
             <Card title="Au-delà de l'Horizon" produced="Sophie Laurent" actors={["Emma Durand", "Thomas Moreau"]} image={image2} duration="58:42" />
             <Card title="Une Nuit à Paris" produced="Michel Robert" actors={["Lucas Martin", "Sophie Laurent", "Alice Moreau"]} image={image3} duration="1:27:16" />
