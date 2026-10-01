@@ -1,14 +1,23 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom"
+
 import Header from "./components/Header/Header"
 import SidePanel from "./components/SidePanel/SidePanel"
 
-import AppContent from "./components/AppContent/AppContent"
+import Home from "./pages/Home"
+import Profile from "./pages/Profile"
 
 function App() {
-    return (<>
-        <Header />
-        <SidePanel />
-        <AppContent />
-    </>)
+    return (
+        <BrowserRouter basename="/ouistream">
+            <Header />
+            <SidePanel />
+
+            <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/profile" element={<Profile />} />
+            </Routes>
+        </BrowserRouter>
+    )
 }
 
 export default App
