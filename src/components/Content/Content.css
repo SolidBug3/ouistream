@@ -1,0 +1,35 @@
+.Content-section {
+    margin-left: 80px;
+    padding: 30px;
+}
+
+.Content-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.Content-icon {
+    font-size: 1.2em;
+    color: white;
+}
+
+.Content-title {
+    color: white;
+    font-size: 1em;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.Content {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+@media (max-width: 900px) {
+    .Content {
+        grid-template-columns: 1fr;
+    }
+}

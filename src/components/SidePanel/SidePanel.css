@@ -1,0 +1,35 @@
+.SidePanel {
+    position: fixed;
+    left: 0;
+    top: 0;
+
+    width: 60px;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    padding-top: 60px;
+    gap: 20px;
+}
+
+.SidePanel-item {
+    border-radius: 12px;
+    color: white;
+
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 22px;
+    cursor: pointer;
+}
+
+    .SidePanel-item:hover {
+        background: rgba(214, 81, 58, 0.35);
+        border-radius: 12px;
+    }

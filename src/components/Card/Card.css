@@ -1,0 +1,83 @@
+.Card {
+    border-radius: 12px;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+}
+
+.Card-image {
+    aspect-ratio: 16 / 9;
+    background: white;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+
+.Card-info {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    padding: 22px;
+}
+
+    .Card-info::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(8px);
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+.Card:hover .Card-info::before {
+    opacity: 1;
+}
+
+.Card-title {
+    position: relative;
+    color: #ffb347;
+    font-size: 24px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.Card-duration {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    padding: 5px 8px;
+    background: black;
+    color: white;
+    font-size: 14px;
+    border-radius: 5px;
+}
+
+.Card-details {
+    padding: 12px 4px;
+}
+
+.Card-produced {
+    color: white;
+    font-size: 15px;
+    text-transform: uppercase;
+}
+
+    .Card-produced span {
+        color: #ffb347;
+    }
+
+.Card-actors {
+    color: #b6ccd7;
+    font-size: 12px;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+.Card:hover {
+    transform: translateY(-3px);
+}

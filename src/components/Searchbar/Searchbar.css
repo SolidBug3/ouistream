@@ -1,0 +1,32 @@
+.SearchBar {
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    width: 300px;
+    height: 42px;
+    background: #080b0e;
+    border: 1px solid #303a42;
+    border-radius: 10px;
+    padding: 0px 14px;
+    box-sizing: border-box;
+}
+
+.SearchBar-icon {
+    color: #b6ccd7;
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+.SearchBar input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: white;
+    font-family: "Louis George Cafe";
+    font-size: 16px;
+}
+
+    .SearchBar input::placeholder {
+        color: #71808a;
+    }

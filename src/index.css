@@ -1,0 +1,48 @@
+@font-face {
+    font-family: "Louis George Cafe";
+    src: url("./assets/fonts/Louis George Cafe.ttf") format("truetype");
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Louis George Cafe";
+    src: url("./assets/fonts/Louis George Cafe Bold.ttf") format("truetype");
+    font-weight: 700;
+}
+
+html, body {
+    font-family: "Louis George Cafe";
+    margin: 0px;
+    background: linear-gradient(to bottom, #000 0%, #080b0e 50%, #151f28 100%);
+    background-attachment: fixed;
+}
+
+html {
+    scrollbar-color: #555 #080b0e;
+}
+
+    html::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    html::-webkit-scrollbar-track {
+        background: #080b0e;
+    }
+
+    html::-webkit-scrollbar-thumb {
+        background: #555;
+        border-radius: 10px;
+    }
+
+body::-webkit-scrollbar {
+    width: 10px;
+}
+
+body::-webkit-scrollbar-track {
+    background: #080b0e;
+}
+
+body::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 10px;
+}
