@@ -25,7 +25,7 @@ function Menu() {
 
                 {user ? (<>
                     <Link className="Menu-item" to="/profile" onClick={() => setOpen(false)}>
-                        <span className="Menu-icon">♡</span>
+                        <span className="Menu-icon">👤</span>
                         <span>{texts.profile}</span>
                     </Link>
 
