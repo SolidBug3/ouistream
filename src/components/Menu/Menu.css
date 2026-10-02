@@ -1,0 +1,144 @@
+:root {
+    --menu-primary: #151c25;
+    --menu-primary-hover: #1d2733;
+    --menu-accent: #e50914;
+    --menu-accent-hover: #f6121d;
+    --menu-background: #151c25;
+    --menu-text: #f5f5f5;
+    --menu-muted: #9da8b4;
+    --menu-hover: #202b38;
+    --menu-border: rgba(255, 255, 255, 0.12);
+    --menu-shadow: rgba(0, 0, 0, 0.5);
+}
+
+.Menu {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
+}
+
+.Menu-menu {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 1px solid rgba(229, 9, 20, 0.7);
+    border-radius: 14px;
+    background: var(--menu-primary);
+    color: var(--menu-text);
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0px 8px 25px var(--menu-shadow);
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+    .Menu-menu:hover {
+        background: var(--menu-primary-hover);
+        border-color: rgba(229, 9, 20, 0.7);
+        box-shadow: 0px 8px 25px var(--menu-shadow);
+    }
+
+.Menu-items {
+    display: flex;
+    position: absolute;
+    top: 58px;
+    left: 0;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 210px;
+    padding: 8px;
+    background: var(--menu-background);
+    border: 1px solid var(--menu-border);
+    border-radius: 16px;
+    box-shadow: 0px 16px 40px var(--menu-shadow);
+    z-index: 101;
+}
+
+.Menu-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    height: 46px;
+    box-sizing: border-box;
+    padding: 0px 14px;
+    border-radius: 10px;
+    color: var(--menu-text);
+    font-size: 15px;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+}
+
+.Menu-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    min-width: 22px;
+    color: var(--menu-muted);
+    font-size: 20px;
+    transition: color 0.2s;
+}
+
+.Menu-item:hover {
+    background: var(--menu-hover);
+}
+
+    .Menu-item:hover .Menu-icon {
+        color: var(--menu-accent);
+    }
+
+@media (max-width: 900px) {
+    .Menu {
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        pointer-events: none;
+        z-index: 1000;
+    }
+
+    .Menu-menu {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        width: 52px;
+        height: 52px;
+        pointer-events: auto;
+        z-index: 1002;
+    }
+
+    .Menu-items {
+        position: fixed;
+        top: 0px;
+        left: 0px;
+        right: 0px;
+        width: 100%;
+        min-width: 0px;
+        box-sizing: border-box;
+        padding: 84px 20px 24px;
+        gap: 4px;
+        border: none;
+        border-radius: 0px 0px 24px 24px;
+        background: var(--menu-background);
+        box-shadow: 0px 16px 40px var(--menu-shadow);
+        pointer-events: auto;
+        z-index: 1001;
+    }
+
+    .Menu-item {
+        height: 56px;
+        padding: 0px 18px;
+        border-radius: 12px;
+        gap: 16px;
+        font-size: 17px;
+    }
+
+    .Menu-icon {
+        width: 26px;
+        min-width: 26px;
+        font-size: 22px;
+    }
+}
