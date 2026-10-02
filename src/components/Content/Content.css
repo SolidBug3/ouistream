@@ -1,5 +1,4 @@
 .Content-section {
-    margin-left: 80px;
     padding: 30px;
 }
 
@@ -34,7 +33,6 @@
     }
 
     .Content-section {
-        margin-left: 40px;
         padding: 30px;
     }
 }

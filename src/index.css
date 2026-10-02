@@ -10,6 +10,11 @@
     font-weight: 700;
 }
 
+@font-face {
+    font-family: "Louis George Cafe";
+    src: url("./assets/fonts/Louis George Cafe Italic.ttf") format("truetype");
+}
+
 html, body {
     font-family: "Louis George Cafe";
     margin: 0px;

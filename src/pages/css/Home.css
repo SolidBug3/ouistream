@@ -1,10 +1,9 @@
 .AppContent {
-    padding-top: 2.25%;
+    padding: 2.25%;
 }
-
 
 @media (max-width: 900px) {
     .AppContent {
-        padding-top: 8%;
+        padding: 16%;
     }
 }

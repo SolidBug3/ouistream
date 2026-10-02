@@ -1,0 +1,97 @@
+.ProfileContent {
+    padding: 5% 5%;
+}
+
+.Profile {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.ProfileInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.ProfileName {
+    font-family: Arial, sans-serif;
+    font-size: 3em;
+    font-weight: bold;
+    color: #ffb347;
+    overflow-wrap: break-word;
+    background: black;
+    border: none;
+    outline: none;
+    padding: 0px;
+    max-width: 100%;
+}
+
+.ProfileCategory {
+    margin-top: 5px;
+    font-size: 1.2em;
+    color: white;
+    background: black;
+    border: none;
+    outline: none;
+    padding: 0px 6px;
+    max-width: 100%;
+}
+
+.ProfileQuote {
+    margin-top: 15px;
+    font-size: 1em;
+    font-style: italic;
+    color: white;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    width: 500px;
+    max-width: 100%;
+    background: black;
+    border: none;
+    outline: none;
+    padding: 0px;
+    resize: none;
+    font-family: inherit;
+}
+
+.ProfileSave {
+    margin-top: 15px;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    background: #ffb347;
+    color: #151f28;
+    font-size: 0.9em;
+    cursor: pointer;
+}
+
+    .ProfileSave:hover {
+        opacity: 0.85;
+    }
+
+.ProfileBar {
+    width: 100%;
+    height: 1px;
+    margin-top: 30px;
+    background: white;
+    transform: scaleY(0.5);
+    transform-origin: top;
+}
+
+.AppContent {
+    padding: 2.25%;
+}
+
+@media (max-width: 900px) {
+
+    .ProfileContent {
+        padding: 15% 10%;
+    }
+
+    .ProfileName {
+        font-size: 2em;
+    }
+}

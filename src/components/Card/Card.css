@@ -2,6 +2,7 @@
     border-radius: 12px;
     overflow: hidden;
     transition: transform 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .Card-image {
@@ -10,61 +11,58 @@
     background-size: cover;
     background-position: center;
     position: relative;
+    filter: saturate(0.9) contrast(1.05);
 }
 
-.Card-info {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    padding: 22px;
-}
-
-    .Card-info::before {
+    .Card-image::after {
         content: "";
         position: absolute;
         left: 0;
         right: 0;
         top: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.45);
-        backdrop-filter: blur(8px);
-        opacity: 0;
-        transition: opacity 0.2s ease;
+        background: linear-gradient(to bottom, transparent 20%, rgba(0, 0, 0, 0.9) 100%);
+        pointer-events: none;
     }
 
-.Card:hover .Card-info::before {
-    opacity: 1;
+.Card-info {
+    position: absolute;
+    left: clamp(14px, 2.5vw, 30px);
+    right: clamp(14px, 2.5vw, 30px);
+    bottom: clamp(55px, 6vw, 75px);
+    z-index: 2;
 }
 
 .Card-title {
-    position: relative;
     color: #ffb347;
-    font-size: 24px;
-    font-weight: bold;
+    font-family: Arial, sans-serif;
+    font-size: clamp(20px, 2.2vw, 32px);
+    font-weight: 900;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-.Card-duration {
-    position: absolute;
-    right: 10px;
-    bottom: 10px;
-    padding: 5px 8px;
-    background: black;
+.Card-ecritPar {
     color: white;
-    font-size: 14px;
-    border-radius: 5px;
+    font-family: "Louis George Cafe", sans-serif;
+    font-size: clamp(11px, 1vw, 15px);
+    margin-top: 3px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
 }
 
 .Card-details {
-    padding: 12px 4px;
+    position: absolute;
+    left: clamp(14px, 2.5vw, 30px);
+    bottom: clamp(10px, 1.5vw, 18px);
+    z-index: 2;
 }
 
 .Card-produced {
     color: white;
-    font-size: 15px;
+    font-size: clamp(10px, 0.9vw, 14px);
     text-transform: uppercase;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
 }
 
     .Card-produced span {
@@ -73,11 +71,28 @@
 
 .Card-actors {
     color: #b6ccd7;
-    font-size: 12px;
+    font-size: clamp(9px, 0.8vw, 12px);
     text-transform: uppercase;
-    margin-top: 4px;
+    margin-top: 2px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.Card-duration {
+    position: absolute;
+    right: clamp(7px, 1vw, 14px);
+    bottom: clamp(7px, 1vw, 14px);
+    padding: clamp(3px, 0.4vw, 5px) clamp(5px, 0.6vw, 8px);
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    font-size: clamp(10px, 0.8vw, 13px);
+    border-radius: 5px;
+    z-index: 2;
 }
 
 .Card:hover {
     transform: translateY(-3px);
 }
+
+    .Card:hover .Card-image {
+        filter: saturate(1) contrast(1.08);
+    }
