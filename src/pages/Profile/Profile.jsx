@@ -1,29 +1,15 @@
-import "./Profile.css"
-
-import { useEffect, useState } from "react"
-
-import Menu from "../../components/Menu/Menu"
+import { Navigate } from "react-router-dom"
 
 import useAuth from "../../supabase/auth/useAuth"
-import getUser from "../../supabase/db/queries/getUser"
-
-import ProfileCard from "../../components/ProfileCard/ProfileCard"
 
 function Profile() {
-    const authUser = useAuth()
-    const [user, setUser] = useState(null)
+    const user = useAuth()
 
-    useEffect(() => { if (!authUser) { return } getUser(authUser.id).then(setUser) }, [authUser])
+    if (!user) {
+        return null
+    }
 
-    return (
-        <div className="Profile">
-            <Menu />
-
-            <div className="Content">
-                {user && <ProfileCard user={user} />}
-            </div>
-        </div>
-    )
+    return <Navigate to={`/user/${user.id}`} replace />
 }
 
 export default Profile

@@ -13,6 +13,13 @@
     box-shadow: 0px 16px 40px rgba(0, 0, 0, 0.35);
 }
 
+    .ProfileCard .QRCode {
+        order: -1;
+        width: 80px;
+        height: 80px;
+        padding: 6px;
+    }
+
 .ProfileCard-avatar {
     display: flex;
     align-items: center;
@@ -29,6 +36,7 @@
 
 .ProfileCard-content {
     min-width: 0;
+    flex: 1;
 }
 
 .ProfileCard-name {
@@ -55,14 +63,9 @@
     line-height: 1.5;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 900px) {
     .ProfileCard {
-        width: calc(100% + 24px);
-        margin-left: -12px;
-        flex-direction: column;
-        gap: 18px;
-        padding: 28px 20px;
-        text-align: center;
+        gap: 22px;
     }
 
     .ProfileCard-avatar {
@@ -74,8 +77,38 @@
     .ProfileCard-name {
         font-size: 24px;
     }
+}
+
+@media (max-width: 600px) {
+    .ProfileCard {
+        width: calc(100% + 24px);
+        margin-left: -12px;
+        flex-direction: column;
+        gap: 18px;
+        padding: 28px 20px;
+        text-align: center;
+    }
+
+    .ProfileCard-avatar {
+        order: 1;
+        width: 90px;
+        height: 90px;
+        font-size: 40px;
+    }
+
+    .ProfileCard-content {
+        order: 2;
+        width: 100%;
+    }
 
     .ProfileCard-quote {
         margin-top: 14px;
+    }
+
+    .ProfileCard .QRCode {
+        order: 3;
+        width: 140px;
+        height: 140px;
+        padding: 10px;
     }
 }

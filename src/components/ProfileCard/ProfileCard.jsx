@@ -1,10 +1,15 @@
 import "./ProfileCard.css"
 
+import QRCode from "../QRCode/QRCode"
+
 function ProfileCard({ user }) {
     const staff = [1, 2, 26, 27].includes(user.role_id)
+    const profileUrl = window.location.origin + window.location.pathname
 
     return (
         <div className="ProfileCard">
+            <QRCode text={profileUrl} />
+
             <div className="ProfileCard-avatar">
                 👤
             </div>
