@@ -138,11 +138,15 @@
         height: 56px;
         padding: 0px 8px;
         border-radius: 12px;
-        gap: 8px;
+        gap: 0px;
         font-size: 14px;
         text-align: center;
         justify-content: center;
     }
+
+        .Menu-item > span:not(.Menu-icon) {
+            display: none;
+        }
 
     .Menu-icon {
         width: 26px;
@@ -167,8 +171,6 @@
 
     .Menu-item {
         padding: 0px 4px;
-        gap: 5px;
-        font-size: 13px;
     }
 
     .Menu-icon {
