@@ -93,52 +93,58 @@
 
 @media (max-width: 900px) {
     .Menu {
-        top: 0px;
-        left: 0px;
-        width: 100%;
+        top: auto;
+        bottom: 0;
+        left: 50%;
+        width: auto;
+        transform: translateX(-50%);
         pointer-events: none;
         z-index: 1000;
     }
 
     .Menu-menu {
-        position: fixed;
-        top: 16px;
-        left: 16px;
-        width: 52px;
-        height: 52px;
-        pointer-events: auto;
-        z-index: 1002;
+        display: none;
     }
 
     .Menu-items {
-        position: fixed;
-        top: 0px;
-        left: 0px;
-        right: 0px;
-        width: 100%;
-        min-width: 0px;
+        position: static;
+        display: flex;
+        width: max-content;
+        min-width: 0;
         box-sizing: border-box;
-        padding: 84px 20px 24px;
-        gap: 4px;
-        border: none;
-        border-radius: 0px 0px 24px 24px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 24px calc(10px + env(safe-area-inset-bottom));
+        gap: 12px;
+        border: 1px solid var(--menu-border);
+        border-bottom: none;
+        border-radius: 24px 24px 0 0;
         background: var(--menu-background);
-        box-shadow: 0px 16px 40px var(--menu-shadow);
+        box-shadow: 0px -8px 25px var(--menu-shadow);
         pointer-events: auto;
         z-index: 1001;
     }
 
     .Menu-item {
+        flex: 0 0 auto;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        width: 110px;
         height: 56px;
-        padding: 0px 18px;
+        padding: 0px 16px;
         border-radius: 12px;
-        gap: 16px;
-        font-size: 17px;
+        gap: 10px;
+        font-size: 14px;
+        text-align: center;
     }
 
     .Menu-icon {
         width: 26px;
         min-width: 26px;
+        height: 26px;
         font-size: 22px;
+        line-height: 1;
     }
 }
