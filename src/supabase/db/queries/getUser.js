@@ -1,17 +1,48 @@
 import db from "../db"
 
 async function getUser(id) {
-    const { data, error } = await db
+    const locale = navigator.language.split("-")[0]
+
+    const { data: user, error: userError } = await db
         .from("users")
-        .select("*, roles(name)")
+        .select("display_name, quote, role_id")
         .eq("id", id)
         .single()
 
-    if (error) {
-        throw error
+    if (userError) {
+        throw userError
     }
 
-    return data
+    let role = null
+
+    if (user.role_id) {
+        let { data: translation } = await db
+            .from("translation")
+            .select("value, locale!inner(code)")
+            .eq("label", `role_${user.role_id}`)
+            .eq("locale.code", locale)
+            .maybeSingle()
+
+        if (!translation && locale !== "en") {
+            const result = await db
+                .from("translation")
+                .select("value, locale!inner(code)")
+                .eq("label", `role_${user.role_id}`)
+                .eq("locale.code", "en")
+                .maybeSingle()
+
+            translation = result.data
+        }
+
+        role = translation?.value ?? null
+    }
+
+    return {
+        display_name: user.display_name,
+        quote: user.quote,
+        role_id: user.role_id,
+        role
+    }
 }
 
 export default getUser

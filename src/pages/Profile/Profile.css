@@ -1,0 +1,13 @@
+.Profile {
+    padding-top: 88px;
+}
+
+    .Profile > .Content {
+        margin: 0px 24px 60px;
+    }
+
+@media (max-width: 900px) {
+    .Profile > .Content {
+        margin: 0px 16px 40px;
+    }
+}
