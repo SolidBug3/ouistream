@@ -42,7 +42,7 @@
     }
 
 .Menu-items {
-    display: flex;
+    display: none;
     position: absolute;
     top: 58px;
     left: 0;
@@ -56,6 +56,10 @@
     box-shadow: 0px 16px 40px var(--menu-shadow);
     z-index: 101;
 }
+
+    .Menu-items.open {
+        display: flex;
+    }
 
 .Menu-item {
     display: flex;
