@@ -1,3 +1,4 @@
+
 :root {
     --menu-primary: #151c25;
     --menu-primary-hover: #1d2733;
@@ -87,6 +88,28 @@
     transition: color 0.2s;
 }
 
+.Menu-profile-avatar {
+    flex: 0 0 28px;
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: #293744;
+    color: #b6ccd7;
+    font-size: 13px;
+    font-weight: bold;
+    object-fit: cover;
+}
+
+    .Menu-profile-avatar img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
 .Menu-item:hover {
     background: var(--menu-hover);
 }
@@ -159,6 +182,14 @@
         font-size: 22px;
         line-height: 1;
     }
+
+    .Menu-profile-avatar {
+        flex: 0 0 28px;
+        width: 28px;
+        min-width: 28px;
+        height: 28px;
+        font-size: 13px;
+    }
 }
 
 @media (max-width: 420px) {
@@ -181,5 +212,13 @@
         width: 22px;
         min-width: 22px;
         font-size: 20px;
+    }
+
+    .Menu-profile-avatar {
+        flex: 0 0 28px;
+        width: 28px;
+        min-width: 28px;
+        height: 28px;
+        font-size: 13px;
     }
 }

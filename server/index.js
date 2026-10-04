@@ -1,3 +1,4 @@
+
 require("dotenv").config()
 
 const express = require("express")
@@ -32,7 +33,7 @@ app.use(cors({
         "http://localhost:5173",
         "https://solidbug3.github.io"
     ],
-    methods: ["GET", "POST", "PUT"],
+    methods: ["GET", "POST", "PUT", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }))
 
@@ -84,7 +85,8 @@ app.post("/api/upload-url", async (req, res) => {
 
         const command = new PutObjectCommand({
             Bucket: process.env.FILEBASE_BUCKET,
-            Key: key
+            Key: key,
+            ContentType: contentType
         })
 
         const uploadUrl = await getSignedUrl(s3, command, {
@@ -97,11 +99,19 @@ app.post("/api/upload-url", async (req, res) => {
             contentType
         })
     } catch (error) {
-        console.error("Upload URL error:", error.name, error.message)
-        res.status(500).json({ error: "Could not create upload URL" })
+        console.error("Upload URL error:", {
+            name: error?.name,
+            message: error?.message,
+            code: error?.code,
+            statusCode: error?.$metadata?.httpStatusCode
+        })
+
+        res.status(500).json({
+            error: "Could not create upload URL"
+        })
     }
 })
 
 app.listen(port, () => {
-    console.log(`Ouistream backend running at http://localhost:${port}`)
+    console.log(`Ouistream backend running on port ${port}`)
 })
