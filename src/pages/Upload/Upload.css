@@ -1,0 +1,355 @@
+.Upload {
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 80px 20px 100px;
+    background: linear-gradient(135deg, #000000, #151f28);
+    color: #f5f5f5;
+    font-family: "Louis George Cafe", sans-serif;
+}
+
+.Upload-form {
+    width: min(700px, 100%);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.Upload-video {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 220px;
+    padding: 20px;
+    box-sizing: border-box;
+    border: 1px dashed rgba(182, 204, 215, 0.35);
+    border-radius: 16px;
+    background: rgba(21, 31, 40, 0.7);
+    color: #b6ccd7;
+    font-size: 18px;
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+    .Upload-video:hover {
+        border-color: rgba(229, 9, 20, 0.7);
+        background: rgba(21, 31, 40, 0.9);
+    }
+
+.Upload-video-icon {
+    font-size: 42px;
+}
+
+.Upload-video-name {
+    max-width: 90%;
+    overflow: hidden;
+    color: #f5f5f5;
+    font-size: 17px;
+    font-weight: bold;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.Upload-video-size {
+    color: #9da8b4;
+    font-size: 14px;
+}
+
+.Upload-video input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.Upload-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+    .Upload-field span,
+    .Upload-thumbnail > span:first-child,
+    .Upload-person-title {
+        color: #b6ccd7;
+        font-size: 15px;
+    }
+
+    .Upload-field input,
+    .Upload-field textarea {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid rgba(182, 204, 215, 0.2);
+        border-radius: 10px;
+        outline: none;
+        background: #151c25;
+        color: #f5f5f5;
+        font-family: inherit;
+        font-size: 16px;
+        transition: border-color 0.2s;
+    }
+
+        .Upload-field input:focus,
+        .Upload-field textarea:focus {
+            border-color: rgba(182, 204, 215, 0.6);
+        }
+
+        .Upload-field input.invalid {
+            border-color: rgba(229, 9, 20, 0.8);
+        }
+
+.Upload-video.invalid {
+    border-color: rgba(229, 9, 20, 0.8);
+}
+
+.Upload-field textarea {
+    min-height: 130px;
+    resize: vertical;
+}
+
+.Upload-person {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.PersonSelector {
+    position: relative;
+    width: 100%;
+}
+
+    .PersonSelector > input {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid rgba(182, 204, 215, 0.2);
+        border-radius: 10px;
+        outline: none;
+        background: #151c25;
+        color: #f5f5f5;
+        font-family: inherit;
+        font-size: 16px;
+        transition: border-color 0.2s;
+    }
+
+        .PersonSelector > input:focus {
+            border-color: rgba(182, 204, 215, 0.6);
+        }
+
+        .PersonSelector > input::placeholder {
+            color: #687783;
+        }
+
+.PersonSelector-options {
+    position: absolute;
+    z-index: 10;
+    top: calc(100% + 5px);
+    left: 0;
+    right: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: 5px;
+    border: 1px solid rgba(182, 204, 215, 0.2);
+    border-radius: 10px;
+    background: #151c25;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+    .PersonSelector-options button {
+        display: block;
+        width: 100%;
+        padding: 11px 12px;
+        border: none;
+        border-radius: 7px;
+        background: transparent;
+        color: #f5f5f5;
+        font-family: inherit;
+        font-size: 15px;
+        text-align: left;
+        cursor: pointer;
+    }
+
+        .PersonSelector-options button:hover {
+            background: #1d2733;
+        }
+
+    .PersonSelector-options .PersonSelector-external {
+        margin-top: 5px;
+        border-top: 1px solid rgba(182, 204, 215, 0.12);
+        border-radius: 0 0 7px 7px;
+        color: #b6ccd7;
+    }
+
+.Upload-person-add {
+    align-self: flex-start;
+    padding: 8px 14px;
+    border: 1px solid rgba(182, 204, 215, 0.25);
+    border-radius: 8px;
+    background: #151c25;
+    color: #b6ccd7;
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+    .Upload-person-add:hover {
+        border-color: rgba(229, 9, 20, 0.8);
+        background: #1d2733;
+    }
+
+.Upload-thumbnail {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 18px;
+    border: 1px solid rgba(182, 204, 215, 0.15);
+    border-radius: 12px;
+    background: rgba(21, 28, 37, 0.7);
+}
+
+    .Upload-thumbnail.invalid {
+        border-color: rgba(229, 9, 20, 0.8);
+    }
+
+.Upload-thumbnail-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 180px;
+    height: 100px;
+    overflow: hidden;
+    border: 1px dashed rgba(182, 204, 215, 0.25);
+    border-radius: 10px;
+    background: #151c25;
+    color: #9da8b4;
+    font-size: 30px;
+}
+
+    .Upload-thumbnail-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.Upload-thumbnail-name {
+    color: #9da8b4;
+    font-size: 14px;
+}
+
+.Upload-thumbnail input {
+    color: #b6ccd7;
+    font-family: inherit;
+}
+
+.Upload-submit {
+    align-self: flex-end;
+    padding: 12px 28px;
+    border: 1px solid rgba(182, 204, 215, 0.3);
+    border-radius: 10px;
+    background: #151c25;
+    color: #f5f5f5;
+    font-family: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+    .Upload-submit:hover {
+        border-color: rgba(229, 9, 20, 0.8);
+        background: #1d2733;
+    }
+
+    .Upload-submit:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+.Upload-progress {
+    width: min(500px, 100%);
+    margin: 100px auto 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px 30px;
+    box-sizing: border-box;
+    border: 1px solid rgba(182, 204, 215, 0.15);
+    border-radius: 16px;
+    background: rgba(21, 31, 40, 0.7);
+    text-align: center;
+}
+
+    .Upload-progress h2 {
+        margin: 0;
+        color: #f5f5f5;
+        font-size: 24px;
+        font-weight: 500;
+    }
+
+.Upload-progress-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    border: 1px solid rgba(182, 204, 215, 0.25);
+    border-radius: 50%;
+    color: #b6ccd7;
+    font-size: 36px;
+}
+
+.Upload-progress-bar {
+    width: 100%;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #0b1118;
+}
+
+.Upload-progress-fill {
+    height: 100%;
+    border-radius: 10px;
+    background: #2196f3;
+    transition: width 0.2s ease;
+}
+
+.Upload-progress-percent {
+    color: #b6ccd7;
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+}
+
+.Upload-error {
+    padding: 14px 16px;
+    border: 1px solid rgba(229, 9, 20, 0.5);
+    border-radius: 10px;
+    background: rgba(229, 9, 20, 0.08);
+    color: #f5b6bd;
+    font-size: 15px;
+}
+
+@media (max-width: 600px) {
+    .Upload {
+        padding: 30px 16px 100px;
+    }
+
+    .Upload-video {
+        min-height: 180px;
+    }
+
+    .Upload-submit {
+        width: 100%;
+    }
+
+    .Upload-progress {
+        margin-top: 50px;
+        padding: 30px 20px;
+    }
+}

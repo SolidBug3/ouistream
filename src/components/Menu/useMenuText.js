@@ -8,7 +8,7 @@ function useMenuText() {
     useEffect(() => {
         async function load() {
             const locale = navigator.language.split("-")[0]
-            const labels = ["home", "profile", "logout", "login"]
+            const labels = ["home", "profile", "upload", "logout", "login"]
             const result = {}
 
             for (const label of labels) {

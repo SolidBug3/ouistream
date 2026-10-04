@@ -29,6 +29,11 @@ function Menu() {
                         <span>{texts.profile}</span>
                     </Link>
 
+                    <Link className="Menu-item Menu-upload" to="/upload" onClick={() => setOpen(false)}>
+                        <span className="Menu-icon">🎬</span>
+                        <span>{texts.upload}</span>
+                    </Link>
+
                     <Link className="Menu-item" onClick={auth.logout}>
                         <span className="Menu-icon">↪</span>
                         <span>{texts.logout}</span>

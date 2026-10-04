@@ -148,6 +148,10 @@
             display: none;
         }
 
+    .Menu-upload {
+        display: none;
+    }
+
     .Menu-icon {
         width: 26px;
         min-width: 26px;
