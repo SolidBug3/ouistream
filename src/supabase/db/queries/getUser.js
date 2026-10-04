@@ -5,7 +5,7 @@ async function getUser(id) {
 
     const { data: user, error: userError } = await db
         .from("users")
-        .select("display_name, quote, role_id")
+        .select("id, display_name, quote, role_id")
         .eq("id", id)
         .single()
 
