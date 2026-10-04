@@ -1,4 +1,3 @@
-
 import { supabase } from "../../supabase/supabase"
 
 const backendUrl = "https://ouistream-server.onrender.com"
@@ -36,6 +35,7 @@ async function uploadToFilebase(file, kind, onProgress = () => { }) {
         const xhr = new XMLHttpRequest()
 
         xhr.open("PUT", uploadUrl)
+        xhr.setRequestHeader("Content-Type", contentType)
 
         xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
