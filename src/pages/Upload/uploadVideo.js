@@ -1,3 +1,4 @@
+
 import { supabase } from "../../supabase/supabase"
 
 const backendUrl = "https://ouistream-server.onrender.com"
@@ -71,6 +72,7 @@ async function uploadVideo({
     description,
     actors,
     producers,
+    genres = [],
     onProgress = () => { }
 }) {
     const videoId = crypto.randomUUID()
@@ -89,6 +91,7 @@ async function uploadVideo({
     let translationsInserted = false
     let actorsInserted = false
     let producersInserted = false
+    let genresInserted = false
 
     try {
         videoPath = await uploadToFilebase(video, "video", onProgress)
@@ -163,6 +166,12 @@ async function uploadVideo({
                 name: producer.name?.trim() || null
             }))
 
+        const genreRows = [...new Set(genres.filter(Boolean))]
+            .map(genreId => ({
+                video_id: videoId,
+                genre_id: genreId
+            }))
+
         if (actorRows.length > 0) {
             const { error: actorError } = await supabase
                 .from("video_actors")
@@ -181,6 +190,15 @@ async function uploadVideo({
             producersInserted = true
         }
 
+        if (genreRows.length > 0) {
+            const { error: genreError } = await supabase
+                .from("video_genres")
+                .insert(genreRows)
+
+            if (genreError) throw genreError
+            genresInserted = true
+        }
+
         return videoId
     } catch (error) {
         console.error("Upload database operation failed:", {
@@ -189,6 +207,15 @@ async function uploadVideo({
             details: error?.details,
             hint: error?.hint
         })
+
+        if (genresInserted) {
+            const { error: cleanupError } = await supabase
+                .from("video_genres")
+                .delete()
+                .eq("video_id", videoId)
+
+            if (cleanupError) console.error("Genre cleanup failed:", cleanupError)
+        }
 
         if (producersInserted) {
             const { error: cleanupError } = await supabase

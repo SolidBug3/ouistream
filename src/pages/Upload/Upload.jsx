@@ -4,6 +4,7 @@ import "./Upload.css"
 import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
+import { supabase } from "../../supabase/supabase"
 import getUsers from "../../supabase/db/queries/getUsers"
 import useAuth from "../../supabase/auth/useAuth"
 import handleThumbnail from "./handleThumbnail"
@@ -11,6 +12,7 @@ import handleUploadSubmit from "./handleUploadSubmit"
 import handleVideo from "./handleVideo"
 import uploadVideo from "./uploadVideo.js"
 import PersonSelector from "./PersonSelector.jsx"
+import GenreSelector from "./GenreSelector.jsx"
 import useUploadText from "./useUploadText"
 
 function Upload() {
@@ -19,6 +21,8 @@ function Upload() {
     const loggedUser = useAuth()
 
     const [users, setUsers] = useState([])
+    const [genreOptions, setGenreOptions] = useState([])
+    const [selectedGenres, setSelectedGenres] = useState([""])
     const [video, setVideo] = useState(null)
     const [thumbnail, setThumbnail] = useState(null)
     const [thumbnailUrl, setThumbnailUrl] = useState(null)
@@ -51,6 +55,73 @@ function Upload() {
         loadUsers()
     }, [])
 
+    useEffect(() => {
+        async function loadGenres() {
+            try {
+                const locale = navigator.language.split("-")[0]
+
+                const { data: locales, error: localeError } = await supabase
+                    .from("locale")
+                    .select("id, code")
+                    .in("code", [locale, "en"])
+
+                if (localeError) throw localeError
+
+                const availableLocales = locales || []
+                const currentLocale = availableLocales.find(item => item.code === locale)
+                    || availableLocales.find(item => item.code === "en")
+
+                if (!currentLocale) {
+                    throw new Error("Could not find a supported locale")
+                }
+
+                const { data: genres, error: genreError } = await supabase
+                    .from("genre")
+                    .select("id")
+                    .order("id", { ascending: true })
+
+                if (genreError) throw genreError
+
+                if (!genres?.length) {
+                    setGenreOptions([])
+                    return
+                }
+
+                const labels = genres.map(genre => `genre_${genre.id}`)
+                const localeIds = availableLocales.map(item => item.id)
+
+                const { data: translations, error: translationError } = await supabase
+                    .from("translation")
+                    .select("label, locale_id, value")
+                    .in("label", labels)
+                    .in("locale_id", localeIds)
+
+                if (translationError) throw translationError
+
+                const englishLocale = availableLocales.find(item => item.code === "en")
+
+                setGenreOptions(genres.map(genre => {
+                    const label = `genre_${genre.id}`
+
+                    const translation = translations?.find(item =>
+                        item.label === label && item.locale_id === currentLocale.id
+                    ) || translations?.find(item =>
+                        item.label === label && item.locale_id === englishLocale?.id
+                    )
+
+                    return {
+                        id: String(genre.id),
+                        name: translation?.value || `Genre ${genre.id}`
+                    }
+                }))
+            } catch (error) {
+                console.error("Could not load genres:", error)
+            }
+        }
+
+        loadGenres()
+    }, [])
+
     function updateActor(index, value) {
         const values = [...actors]
         values[index] = value
@@ -61,6 +132,12 @@ function Upload() {
         const values = [...producers]
         values[index] = value
         setProducers(values)
+    }
+
+    function updateGenre(index, value) {
+        const values = [...selectedGenres]
+        values[index] = value
+        setSelectedGenres(values)
     }
 
     async function submitUpload(event) {
@@ -82,6 +159,7 @@ function Upload() {
                 description,
                 actors,
                 producers,
+                genres: selectedGenres.filter(Boolean),
                 onProgress: setProgress
             })
 
@@ -240,6 +318,33 @@ function Upload() {
                             }
                         >
                             + {texts.add_producer}
+                        </button>
+                    </div>
+
+                    <div className="Upload-person">
+                        <span className="Upload-person-title">{texts.genres}</span>
+
+                        {selectedGenres.map((genreId, index) => (
+                            <GenreSelector
+                                key={index}
+                                genres={genreOptions.filter(genre =>
+                                    !selectedGenres.some((selected, selectedIndex) =>
+                                        selectedIndex !== index && selected === genre.id
+                                    )
+                                )}
+                                value={genreId}
+                                placeholder={texts.search_genre}
+                                onChange={(value) => updateGenre(index, value)}
+                            />
+                        ))}
+
+                        <button
+                            className="Upload-person-add"
+                            type="button"
+                            onClick={() => setSelectedGenres([...selectedGenres, ""])}
+                            disabled={selectedGenres.some(genre => !genre)}
+                        >
+                            + {texts.add_genre}
                         </button>
                     </div>
 

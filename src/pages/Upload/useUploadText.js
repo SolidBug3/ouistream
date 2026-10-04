@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react"
 
 import getText from "../../supabase/db/queries/getText"
@@ -20,6 +21,9 @@ function useUploadText() {
                 "upload_add_producer",
                 "upload_search_person",
                 "upload_use_name",
+                "upload_genres",
+                "upload_add_genre",
+                "upload_search_genre",
                 "upload_uploading",
                 "upload_complete",
                 "upload_failed"
