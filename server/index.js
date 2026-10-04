@@ -69,11 +69,19 @@ app.get("/api/cloudinary-test", async (req, res) => {
             status: "Cloudinary connected"
         })
     } catch (error) {
-        console.error("Cloudinary connection error:", {
-            name: error?.name,
-            message: error?.message,
-            http_code: error?.http_code
-        })
+        const details = {
+            type: typeof error,
+            name: error?.name ?? null,
+            message: error?.message ?? error?.error?.message ?? String(error),
+            http_code: error?.http_code ?? error?.error?.http_code ?? null,
+            statusCode: error?.statusCode ?? error?.response?.statusCode ?? null,
+            code: error?.code ?? null,
+            keys: error && typeof error === "object"
+                ? Object.keys(error)
+                : []
+        }
+
+        console.error("Cloudinary connection error:", details)
 
         res.status(502).json({
             error: "Could not connect to Cloudinary"
