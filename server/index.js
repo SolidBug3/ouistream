@@ -7,6 +7,7 @@ const { randomUUID } = require("crypto")
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3")
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner")
 const { createClient } = require("@supabase/supabase-js")
+const cloudinary = require("cloudinary").v2
 
 const app = express()
 const port = process.env.PORT || 3001
@@ -15,6 +16,13 @@ const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_ANON_KEY
 )
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true
+})
 
 const s3 = new S3Client({
     endpoint: process.env.FILEBASE_ENDPOINT,
@@ -41,6 +49,36 @@ app.use(express.json())
 
 app.get("/", (req, res) => {
     res.json({ status: "Ouistream backend running" })
+})
+
+app.get("/api/cloudinary-test", async (req, res) => {
+    if (
+        !process.env.CLOUDINARY_CLOUD_NAME ||
+        !process.env.CLOUDINARY_API_KEY ||
+        !process.env.CLOUDINARY_API_SECRET
+    ) {
+        return res.status(503).json({
+            error: "Cloudinary environment variables are missing"
+        })
+    }
+
+    try {
+        await cloudinary.api.ping()
+
+        res.json({
+            status: "Cloudinary connected"
+        })
+    } catch (error) {
+        console.error("Cloudinary connection error:", {
+            name: error?.name,
+            message: error?.message,
+            http_code: error?.http_code
+        })
+
+        res.status(502).json({
+            error: "Could not connect to Cloudinary"
+        })
+    }
 })
 
 app.post("/api/upload-url", async (req, res) => {
