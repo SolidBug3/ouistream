@@ -1,3 +1,4 @@
+
 .Upload {
     min-height: 100vh;
     box-sizing: border-box;
@@ -179,12 +180,37 @@
             background: #1d2733;
         }
 
-    .PersonSelector-options .PersonSelector-external {
-        margin-top: 5px;
-        border-top: 1px solid rgba(182, 204, 215, 0.12);
-        border-radius: 0 0 7px 7px;
-        color: #b6ccd7;
+    .PersonSelector-options .PersonSelector-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
+
+.PersonSelector-avatar,
+.PersonSelector-avatar-fallback {
+    flex: 0 0 28px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.PersonSelector-avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #293744;
+    color: #b6ccd7;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.PersonSelector-options .PersonSelector-external {
+    margin-top: 5px;
+    border-top: 1px solid rgba(182, 204, 215, 0.12);
+    border-radius: 0 0 7px 7px;
+    color: #b6ccd7;
+}
 
 .Upload-person-add {
     align-self: flex-start;

@@ -1,7 +1,7 @@
 
 import { supabase } from "../../supabase/supabase"
 
-const backendUrl = "http://localhost:3001"
+const backendUrl = "https://ouistream-server.onrender.com"
 
 async function uploadToFilebase(file, kind, onProgress = () => { }) {
     const { data: { session }, error } = await supabase.auth.getSession()
