@@ -15,6 +15,8 @@ import PersonSelector from "./PersonSelector.jsx"
 import GenreSelector from "./GenreSelector.jsx"
 import useUploadText from "./useUploadText"
 
+import Menu from "../../components/Menu/Menu"
+
 const processingInterval = 3000
 const processingTimeout = 45 * 60 * 1000
 
@@ -267,6 +269,8 @@ function Upload() {
 
     return (
         <div className="Upload">
+            <Menu />
+
             {uploading || complete ? (
                 <div className="Upload-progress">
                     {complete ? (
