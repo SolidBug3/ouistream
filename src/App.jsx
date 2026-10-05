@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom"
 
 import Home from "./pages/Home/Home"
 import Profile from "./pages/Profile/Profile"
@@ -16,6 +16,8 @@ function App() {
                 <Route path="/user/:id" element={<User />} />
                 <Route path="/upload" element={<Upload />} />
                 <Route path="/video/:id" element={<Video />} />
+                <Route path="/video" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </BrowserRouter>
     )

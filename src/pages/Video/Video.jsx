@@ -1,10 +1,65 @@
-
 import "./Video.css"
 
+import logo from "../../assets/images/logo.png"
 import Hls from "hls.js"
 import { useEffect, useRef, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { supabase } from "../../supabase/supabase"
+import QRCode from "../../components/QRCode/QRCode"
+
+const VOLUME_KEY = "ouistream_video_volume"
+const MUTED_KEY = "ouistream_video_muted"
+
+const INFO_LABELS = [
+    "video_info_featured",
+    "video_info_uploaded_by",
+    "video_info_actors",
+    "video_info_produced_by",
+    "video_info_information",
+    "video_info_close_information",
+    "video_info_uploader",
+    "video_info_duration",
+    "video_info_status",
+    "video_info_genres",
+    "video_info_video_id",
+    "video_info_quality",
+    "video_info_share_video",
+    "video_info_ready",
+    "video_info_failed",
+    "video_info_processing",
+    "video_info_video_processing_failed",
+    "video_info_video_processing",
+    "video_info_playing",
+    "video_info_paused",
+    "video_info_back",
+    "video_info_home",
+    "video_info_auto",
+    "video_info_play",
+    "video_info_pause",
+    "video_info_toggle_information",
+    "video_info_untitled_video",
+    "video_info_ouistream_user"
+]
+
+function getSavedVolume() {
+    try {
+        const saved = localStorage.getItem(VOLUME_KEY)
+        if (saved === null) return 1
+
+        const value = Number(saved)
+        return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 1
+    } catch {
+        return 1
+    }
+}
+
+function getSavedMuted() {
+    try {
+        return localStorage.getItem(MUTED_KEY) === "true"
+    } catch {
+        return false
+    }
+}
 
 function formatTime(seconds) {
     if (!Number.isFinite(seconds) || seconds < 0) return "0:00"
@@ -47,21 +102,65 @@ async function getTranslations(labels, locale) {
 function Video() {
     const { id } = useParams()
     const navigate = useNavigate()
+    const location = useLocation()
 
     const videoRef = useRef(null)
     const hlsRef = useRef(null)
 
     const [video, setVideo] = useState(null)
+    const [uiTranslations, setUiTranslations] = useState({})
     const [loading, setLoading] = useState(true)
     const [loadError, setLoadError] = useState(null)
 
     const [playing, setPlaying] = useState(false)
+    const [playbackStarted, setPlaybackStarted] = useState(false)
     const [currentTime, setCurrentTime] = useState(0)
     const [duration, setDuration] = useState(0)
     const [quality, setQuality] = useState("Auto")
     const [qualities, setQualities] = useState([])
     const [playbackError, setPlaybackError] = useState(null)
     const [showInfo, setShowInfo] = useState(false)
+    const [volume, setVolume] = useState(getSavedVolume)
+    const [muted, setMuted] = useState(getSavedMuted)
+
+    useEffect(() => {
+        try {
+            localStorage.setItem(VOLUME_KEY, String(volume))
+            localStorage.setItem(MUTED_KEY, String(muted))
+        } catch (error) {
+            console.warn("Could not save sound settings:", error)
+        }
+    }, [volume, muted])
+
+    useEffect(() => {
+        const media = videoRef.current
+        if (!media) return
+
+        media.volume = volume
+        media.muted = muted
+    }, [volume, muted])
+
+    function changeVolume(value) {
+        const nextVolume = Number(value)
+        setVolume(nextVolume)
+        setMuted(nextVolume === 0)
+    }
+
+    function toggleMute() {
+        if (muted || volume === 0) {
+            setMuted(false)
+            if (volume === 0) setVolume(0.5)
+        } else {
+            setMuted(true)
+        }
+    }
+
+    function t(key, fallback) {
+        return uiTranslations[`video_info_${key}`] || fallback
+    }
+
+    const from = location.state?.from
+    const canGoBack = typeof from === "string" && from !== "/"
 
     const progress = duration > 0
         ? Math.min((currentTime / duration) * 100, 100)
@@ -73,6 +172,11 @@ function Video() {
         async function loadVideo() {
             setLoading(true)
             setLoadError(null)
+
+            if (!id || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id)) {
+                navigate("/", { replace: true })
+                return
+            }
 
             const { data: videoData, error: videoError } = await supabase
                 .from("videos")
@@ -130,7 +234,8 @@ function Video() {
             const translationLabels = [
                 `video_${id}_title`,
                 `video_${id}_description`,
-                ...genres.map(genre => `genre_${genre.genre_id}`)
+                ...genres.map(genre => `genre_${genre.genre_id}`),
+                ...INFO_LABELS
             ]
 
             const userIds = [...new Set([
@@ -156,6 +261,8 @@ function Video() {
             if (!active) return
 
             if (usersError) console.error("Could not load user profiles:", usersError)
+
+            setUiTranslations(translations)
 
             const userMap = new Map(
                 (users || []).map(user => [user.id, user])
@@ -198,44 +305,72 @@ function Video() {
         if (!media || !streamUrl) return
 
         let hls = null
+        let destroyed = false
+
         setPlaybackError(null)
         setQualities([])
         setQuality("Auto")
+        setPlaybackStarted(false)
+        setPlaying(false)
 
-        if (media.canPlayType("application/vnd.apple.mpegurl")) {
-            media.src = streamUrl
-        } else if (Hls.isSupported()) {
-            hls = new Hls()
-            hlsRef.current = hls
+        const updateQualities = () => {
+            if (!hls) return
 
-            const updateQualities = () => {
-                const heights = [...new Set(
-                    hls.levels
-                        .map(level => level.height)
-                        .filter(height => Number.isFinite(height) && height > 0)
-                )].sort((a, b) => b - a)
+            const heights = [...new Set(
+                hls.levels
+                    .map(level => level.height)
+                    .filter(height => Number.isFinite(height) && height > 0)
+            )].sort((a, b) => b - a)
 
-                setQualities(heights)
+            setQualities(heights)
+        }
+
+        const onHlsError = (_, data) => {
+            if (!data.fatal || destroyed) return
+
+            console.error("Fatal HLS playback error:", data)
+
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                hls.startLoad()
+                return
             }
+
+            if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                hls.recoverMediaError()
+                return
+            }
+
+            setPlaybackError("Unable to play this video stream.")
+            setPlaying(false)
+        }
+
+        if (Hls.isSupported()) {
+            hls = new Hls({
+                enableWorker: true,
+                lowLatencyMode: false,
+                backBufferLength: 90
+            })
+
+            hlsRef.current = hls
 
             hls.on(Hls.Events.MANIFEST_PARSED, updateQualities)
             hls.on(Hls.Events.LEVELS_UPDATED, updateQualities)
+            hls.on(Hls.Events.ERROR, onHlsError)
 
-            hls.on(Hls.Events.ERROR, (_, data) => {
-                if (data.fatal) {
-                    console.error("HLS playback error:", data)
-                    setPlaybackError("Unable to play this video stream.")
-                    setPlaying(false)
-                }
-            })
-
-            hls.loadSource(streamUrl)
             hls.attachMedia(media)
+            hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+                if (!destroyed) hls.loadSource(streamUrl)
+            })
+        } else if (media.canPlayType("application/vnd.apple.mpegurl")) {
+            media.src = streamUrl
+            media.load()
         } else {
             setPlaybackError("HLS playback is not supported by this browser.")
         }
 
         return () => {
+            destroyed = true
+
             if (hls) {
                 hls.destroy()
                 if (hlsRef.current === hls) hlsRef.current = null
@@ -287,8 +422,14 @@ function Video() {
         const height = Number.parseInt(value, 10)
         const levelIndex = hls.levels.findIndex(level => level.height === height)
 
-        if (levelIndex !== -1) {
-            hls.currentLevel = levelIndex
+        if (levelIndex !== -1) hls.currentLevel = levelIndex
+    }
+
+    function goBack() {
+        if (canGoBack) {
+            navigate(-1)
+        } else {
+            navigate("/")
         }
     }
 
@@ -298,7 +439,7 @@ function Video() {
         return (
             <div className="Video Video-message">
                 <p>{loadError}</p>
-                <button onClick={() => navigate(-1)}>Go back</button>
+                <button onClick={() => navigate("/")}>Home</button>
             </div>
         )
     }
@@ -307,21 +448,21 @@ function Video() {
 
     const hasStream = Boolean(video.stream_path)
     const statusLabel = video.status === "ready"
-        ? "Ready"
+        ? t("ready", "Ready")
         : video.status === "failed"
-            ? "Failed"
-            : "Processing"
+            ? t("failed", "Failed")
+            : t("processing", "Processing")
 
     return (
         <div className="Video">
             <header className="Video-header">
-                <button className="Video-back" onClick={() => navigate(-1)}>
-                    <span>←</span>
-                    <span>Back</span>
+                <button className="Video-back" onClick={goBack}>
+                    <span>{canGoBack ? "←" : "⌂"}</span>
+                    <span>{canGoBack ? t("back", "Back") : t("home", "Home")}</span>
                 </button>
 
                 <div className="Video-logo">
-                    Ou<span>i</span>stream
+                    <img src={logo} alt="Ouistream" />
                 </div>
 
                 <div className="Video-header-space" />
@@ -331,29 +472,52 @@ function Video() {
                 <section className="Video-main">
                     <div className="Video-player">
                         {hasStream ? (
-                            <video
-                                ref={videoRef}
-                                className="Video-media"
-                                poster={video.thumbnail_url || undefined}
-                                playsInline
-                                preload="metadata"
-                                onClick={togglePlayback}
-                                onPlay={() => setPlaying(true)}
-                                onPause={() => setPlaying(false)}
-                                onTimeUpdate={event => setCurrentTime(event.currentTarget.currentTime)}
-                                onLoadedMetadata={event => {
-                                    const value = event.currentTarget.duration
-                                    setDuration(Number.isFinite(value) ? value : 0)
-                                }}
-                                onDurationChange={event => {
-                                    const value = event.currentTarget.duration
-                                    setDuration(Number.isFinite(value) ? value : 0)
-                                }}
-                                onError={() => {
-                                    setPlaybackError("Unable to load the video stream.")
-                                    setPlaying(false)
-                                }}
-                            />
+                            <>
+                                <video
+                                    ref={videoRef}
+                                    className="Video-media"
+                                    crossOrigin="anonymous"
+                                    playsInline
+                                    preload="auto"
+                                    onClick={togglePlayback}
+                                    onPlay={() => {
+                                        setPlaying(true)
+                                        setPlaybackStarted(true)
+                                        setPlaybackError(null)
+                                    }}
+                                    onPause={() => setPlaying(false)}
+                                    onTimeUpdate={event => setCurrentTime(event.currentTarget.currentTime)}
+                                    onLoadedMetadata={event => {
+                                        const value = event.currentTarget.duration
+                                        setDuration(Number.isFinite(value) ? value : 0)
+                                    }}
+                                    onDurationChange={event => {
+                                        const value = event.currentTarget.duration
+                                        setDuration(Number.isFinite(value) ? value : 0)
+                                    }}
+                                    onEnded={() => setPlaying(false)}
+                                    onError={event => {
+                                        const mediaError = event.currentTarget.error
+                                        console.error("Video element error:", {
+                                            code: mediaError?.code,
+                                            message: mediaError?.message,
+                                            stream: video.stream_path
+                                        })
+                                        if (!playbackError) {
+                                            setPlaybackError("Unable to load the video stream.")
+                                        }
+                                        setPlaying(false)
+                                    }}
+                                />
+
+                                {!playbackStarted && video.thumbnail_url && (
+                                    <img
+                                        className="Video-poster-overlay"
+                                        src={video.thumbnail_url}
+                                        alt=""
+                                    />
+                                )}
+                            </>
                         ) : (
                             <div className="Video-placeholder">
                                 {video.thumbnail_url && (
@@ -368,8 +532,8 @@ function Video() {
                                     <span className="Video-placeholder-icon">▶</span>
                                     <span>
                                         {video.status === "failed"
-                                            ? "Video processing failed"
-                                            : "Video is processing"}
+                                            ? t("video_processing_failed", "Video processing failed")
+                                            : t("video_processing", "Video is processing")}
                                     </span>
                                 </div>
                             </div>
@@ -379,7 +543,7 @@ function Video() {
                             <button
                                 className="Video-center-play"
                                 onClick={togglePlayback}
-                                aria-label="Play video"
+                                aria-label={t("play", "Play")}
                             >
                                 ▶
                             </button>
@@ -420,28 +584,53 @@ function Video() {
                                         className="Video-control-button Video-play"
                                         onClick={togglePlayback}
                                         disabled={!hasStream}
-                                        aria-label={playing ? "Pause" : "Play"}
+                                        aria-label={playing ? t("pause", "Pause") : t("play", "Play")}
                                     >
                                         {playing ? "Ⅱ" : "▶"}
                                     </button>
 
                                     <span className="Video-control-label">
                                         {hasStream
-                                            ? playing ? "Playing" : "Paused"
+                                            ? playing ? t("playing", "Playing") : t("paused", "Paused")
                                             : statusLabel}
                                     </span>
                                 </div>
 
                                 <div className="Video-control-right">
+                                    <div className="Video-volume">
+                                        <button
+                                            className="Video-control-button Video-volume-button"
+                                            onClick={toggleMute}
+                                            disabled={!hasStream}
+                                            aria-label={muted || volume === 0 ? "Unmute" : "Mute"}
+                                            title={muted || volume === 0 ? "Unmute" : "Mute"}
+                                        >
+                                            {muted || volume === 0 ? "🔇" : volume < 0.5 ? "🔉" : "🔊"}
+                                        </button>
+
+                                        <input
+                                            className="Video-volume-slider"
+                                            type="range"
+                                            min="0"
+                                            max="1"
+                                            step="0.01"
+                                            value={muted ? 0 : volume}
+                                            onChange={event => changeVolume(event.target.value)}
+                                            disabled={!hasStream}
+                                            aria-label="Volume"
+                                            style={{ "--volume-progress": `${(muted ? 0 : volume) * 100}%` }}
+                                        />
+                                    </div>
+
                                     <label className="Video-quality">
-                                        <span>Quality</span>
+                                        <span>{t("quality", "Quality")}</span>
                                         <select
                                             value={quality}
                                             onChange={event => changeQuality(event.target.value)}
                                             aria-label="Video quality"
                                             disabled={!hasStream}
                                         >
-                                            <option value="Auto">Auto</option>
+                                            <option value="Auto">{t("auto", "Auto")}</option>
                                             {qualities.map(height => (
                                                 <option key={height} value={`${height}p`}>
                                                     {height}p
@@ -453,8 +642,8 @@ function Video() {
                                     <button
                                         className={`Video-control-button Video-info-button ${showInfo ? "active" : ""}`}
                                         onClick={() => setShowInfo(!showInfo)}
-                                        aria-label="Toggle video information"
-                                        title="Video information"
+                                        aria-label={t("toggle_information", "Toggle video information")}
+                                        title={t("information", "Video information")}
                                     >
                                         i
                                     </button>
@@ -466,7 +655,7 @@ function Video() {
                     <div className="Video-details">
                         <div className="Video-title-row">
                             <div>
-                                <span className="Video-category">FEATURED VIDEO</span>
+                                <span className="Video-category">{t("featured", "FEATURED VIDEO")}</span>
                                 <h1>{video.title}</h1>
                             </div>
 
@@ -474,18 +663,12 @@ function Video() {
                         </div>
 
                         {video.description && (
-                            <p className="Video-description">
-                                {video.description}
-                            </p>
+                            <p className="Video-description">{video.description}</p>
                         )}
 
                         <div className="Video-meta">
-                            <span>
-                                Uploaded by <strong>{video.uploader}</strong>
-                            </span>
-                            {duration > 0 && (
-                                <span>{formatTime(duration)}</span>
-                            )}
+                            <span>{t("uploaded_by", "Uploaded by")} <strong>{video.uploader}</strong></span>
+                            {duration > 0 && <span>{formatTime(duration)}</span>}
                             <span>ID: {video.id}</span>
                         </div>
 
@@ -499,14 +682,14 @@ function Video() {
 
                         {video.actors.length > 0 && (
                             <div className="Video-people">
-                                <span>Actors</span>
+                                <span>{t("actors", "Actors")}</span>
                                 <strong>{video.actors.map(actor => actor.name).join(", ")}</strong>
                             </div>
                         )}
 
                         {video.producers.length > 0 && (
                             <div className="Video-people">
-                                <span>Produced by</span>
+                                <span>{t("produced_by", "Produced by")}</span>
                                 <strong>{video.producers.map(producer => producer.name).join(", ")}</strong>
                             </div>
                         )}
@@ -516,10 +699,10 @@ function Video() {
                 {showInfo && (
                     <aside className="Video-info">
                         <div className="Video-info-header">
-                            <h2>Information</h2>
+                            <h2>{t("information", "Information")}</h2>
                             <button
                                 onClick={() => setShowInfo(false)}
-                                aria-label="Close information"
+                                aria-label={t("close_information", "Close information")}
                             >
                                 ×
                             </button>
@@ -544,51 +727,58 @@ function Video() {
                         <div className="Video-info-divider" />
 
                         <div className="Video-info-item">
-                            <span>Uploader</span>
+                            <span>{t("uploader", "Uploader")}</span>
                             <strong>{video.uploader}</strong>
                         </div>
 
                         {duration > 0 && (
                             <div className="Video-info-item">
-                                <span>Duration</span>
+                                <span>{t("duration", "Duration")}</span>
                                 <strong>{formatTime(duration)}</strong>
                             </div>
                         )}
 
                         <div className="Video-info-item">
-                            <span>Status</span>
+                            <span>{t("status", "Status")}</span>
                             <strong>{statusLabel}</strong>
                         </div>
 
                         {video.actors.length > 0 && (
                             <div className="Video-info-item">
-                                <span>Actors</span>
+                                <span>{t("actors", "Actors")}</span>
                                 <strong>{video.actors.map(actor => actor.name).join(", ")}</strong>
                             </div>
                         )}
 
                         {video.producers.length > 0 && (
                             <div className="Video-info-item">
-                                <span>Produced by</span>
+                                <span>{t("produced_by", "Produced by")}</span>
                                 <strong>{video.producers.map(producer => producer.name).join(", ")}</strong>
                             </div>
                         )}
 
                         {video.genres.length > 0 && (
                             <div className="Video-info-item">
-                                <span>Genres</span>
+                                <span>{t("genres", "Genres")}</span>
                                 <strong>{video.genres.map(genre => genre.name).join(", ")}</strong>
                             </div>
                         )}
 
                         <div className="Video-info-item">
-                            <span>Video ID</span>
+                            <span>{t("video_id", "Video ID")}</span>
                             <strong>{video.id}</strong>
                         </div>
 
                         <div className="Video-info-item">
-                            <span>Quality</span>
+                            <span>{t("quality", "Quality")}</span>
                             <strong>{quality}</strong>
+                        </div>
+
+                        <div className="Video-info-divider" />
+
+                        <div className="Video-info-qr">
+                            <span>{t("share_video", "Share video")}</span>
+                            <QRCode text={window.location.href} />
                         </div>
                     </aside>
                 )}
