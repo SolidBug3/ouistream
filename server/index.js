@@ -1,4 +1,3 @@
-
 require("dotenv").config()
 
 const express = require("express")
@@ -105,6 +104,14 @@ function isValidWebhookSecret(receivedSecret) {
 
     return received.length === expected.length &&
         timingSafeEqual(received, expected)
+}
+
+function getDuration(value) {
+    const duration = Number(value)
+
+    return Number.isFinite(duration) && duration >= 0
+        ? Math.round(duration)
+        : null
 }
 
 app.get("/", (req, res) => {
@@ -344,9 +351,24 @@ app.post("/api/process-video", async (req, res) => {
             }
         )
 
+        const duration = getDuration(cloudinaryResult.duration)
+
+        if (duration !== null) {
+            const { error: durationError } = await adminSupabase
+                .from("videos")
+                .update({ duration })
+                .eq("id", videoId)
+                .eq("user_id", user.id)
+
+            if (durationError) {
+                console.error("Video duration update error:", durationError)
+            }
+        }
+
         res.json({
             status: "processing",
             videoId,
+            duration,
             cloudinaryPublicId: cloudinaryResult.public_id,
             message: "Video sent to Cloudinary for processing"
         })
@@ -424,12 +446,20 @@ app.post("/api/cloudinary-webhook", async (req, res) => {
         const hlsUrl = hlsResult?.secure_url || hlsResult?.url || null
 
         if (hlsUrl && /^https:\/\/res\.cloudinary\.com\//i.test(hlsUrl)) {
+            const duration = getDuration(payload.duration)
+
+            const update = {
+                stream_path: hlsUrl,
+                status: "ready"
+            }
+
+            if (duration !== null) {
+                update.duration = duration
+            }
+
             const { error: updateError } = await adminSupabase
                 .from("videos")
-                .update({
-                    stream_path: hlsUrl,
-                    status: "ready"
-                })
+                .update(update)
                 .eq("id", videoId)
 
             if (updateError) {
@@ -444,7 +474,8 @@ app.post("/api/cloudinary-webhook", async (req, res) => {
 
             return res.json({
                 status: "ready",
-                videoId
+                videoId,
+                duration
             })
         }
 

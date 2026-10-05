@@ -13,6 +13,17 @@ import Card from "../../components/Card/Card"
 
 const PAGE_SIZE = 10
 
+function formatDuration(seconds) {
+    if (seconds == null || !Number.isFinite(Number(seconds))) return "--:--"
+
+    seconds = Math.floor(Number(seconds))
+
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`
+}
+
 function User() {
     const { id } = useParams()
     const navigate = useNavigate()
@@ -131,7 +142,7 @@ function User() {
                     produced={video.producers.map(producer => producer.name).join(", ")}
                     actors={video.actors.map(actor => actor.name)}
                     image={video.thumbnail_url}
-                    duration={video.duration}
+                    duration={formatDuration(video.duration)}
                     ecritPar={video.producers.map(producer => producer.name)}
                 />
             </div>
