@@ -3,7 +3,7 @@ require("dotenv").config()
 
 const express = require("express")
 const cors = require("cors")
-const { randomUUID } = require("crypto")
+const { randomUUID, timingSafeEqual } = require("crypto")
 const {
     S3Client,
     PutObjectCommand,
@@ -20,6 +20,19 @@ const supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_ANON_KEY
 )
+
+const adminSupabase = process.env.SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false
+            }
+        }
+    )
+    : null
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -75,6 +88,23 @@ function getUserClient(token) {
             }
         }
     )
+}
+
+function isValidWebhookSecret(receivedSecret) {
+    const expectedSecret = process.env.CLOUDINARY_WEBHOOK_SECRET
+
+    if (
+        typeof receivedSecret !== "string" ||
+        !expectedSecret
+    ) {
+        return false
+    }
+
+    const received = Buffer.from(receivedSecret)
+    const expected = Buffer.from(expectedSecret)
+
+    return received.length === expected.length &&
+        timingSafeEqual(received, expected)
 }
 
 app.get("/", (req, res) => {
@@ -187,6 +217,10 @@ app.post("/api/upload-url", async (req, res) => {
 })
 
 app.post("/api/process-video", async (req, res) => {
+    let userSupabase = null
+    let videoId = null
+    let userId = null
+
     try {
         const token = getToken(req)
 
@@ -203,22 +237,24 @@ app.post("/api/process-video", async (req, res) => {
             return res.status(401).json({ error: "Invalid session" })
         }
 
-        const { videoId, sourceKey } = req.body
+        const { videoId: requestedVideoId, sourceKey } = req.body
 
         if (
-            typeof videoId !== "string" ||
+            typeof requestedVideoId !== "string" ||
             typeof sourceKey !== "string" ||
-            !videoId.trim() ||
+            !requestedVideoId.trim() ||
             !sourceKey.startsWith(`${user.id}/`)
         ) {
             return res.status(400).json({ error: "Invalid video details" })
         }
 
-        const userSupabase = getUserClient(token)
+        videoId = requestedVideoId
+        userId = user.id
+        userSupabase = getUserClient(token)
 
         const { data: video, error: videoError } = await userSupabase
             .from("videos")
-            .select("id, user_id, source_path, status")
+            .select("id, user_id, source_path, status, stream_path")
             .eq("id", videoId)
             .eq("user_id", user.id)
             .maybeSingle()
@@ -235,7 +271,7 @@ app.post("/api/process-video", async (req, res) => {
             return res.status(404).json({ error: "Video not found" })
         }
 
-        if (video.status === "ready") {
+        if (video.status === "ready" && video.stream_path) {
             return res.json({
                 status: "ready",
                 message: "Video is already processed"
@@ -246,10 +282,18 @@ app.post("/api/process-video", async (req, res) => {
             !process.env.FILEBASE_BUCKET ||
             !process.env.CLOUDINARY_CLOUD_NAME ||
             !process.env.CLOUDINARY_API_KEY ||
-            !process.env.CLOUDINARY_API_SECRET
+            !process.env.CLOUDINARY_API_SECRET ||
+            !process.env.BACKEND_URL ||
+            !process.env.CLOUDINARY_WEBHOOK_SECRET
         ) {
             return res.status(503).json({
-                error: "Storage or Cloudinary configuration is missing"
+                error: "Storage, Cloudinary, or webhook configuration is missing"
+            })
+        }
+
+        if (!adminSupabase) {
+            return res.status(503).json({
+                error: "Supabase service role key is missing"
             })
         }
 
@@ -265,6 +309,9 @@ app.post("/api/process-video", async (req, res) => {
         )
 
         const publicId = `ouistream/${videoId}`
+        const webhookUrl =
+            `${process.env.BACKEND_URL.replace(/\/$/, "")}` +
+            `/api/cloudinary-webhook?secret=${encodeURIComponent(process.env.CLOUDINARY_WEBHOOK_SECRET)}`
 
         const { error: updateError } = await userSupabase
             .from("videos")
@@ -292,7 +339,8 @@ app.post("/api/process-video", async (req, res) => {
                         format: "m3u8"
                     }
                 ],
-                eager_async: true
+                eager_async: true,
+                eager_notification_url: webhookUrl
             }
         )
 
@@ -310,8 +358,148 @@ app.post("/api/process-video", async (req, res) => {
             code: error?.code
         })
 
+        if (userSupabase && videoId && userId) {
+            await userSupabase
+                .from("videos")
+                .update({ status: "failed" })
+                .eq("id", videoId)
+                .eq("user_id", userId)
+        }
+
         res.status(500).json({
             error: "Could not start video processing"
+        })
+    }
+})
+
+app.post("/api/cloudinary-webhook", async (req, res) => {
+    if (!isValidWebhookSecret(req.query.secret)) {
+        return res.status(401).json({
+            error: "Unauthorized webhook"
+        })
+    }
+
+    if (!adminSupabase) {
+        return res.status(503).json({
+            error: "Supabase service role key is missing"
+        })
+    }
+
+    try {
+        const payload = req.body
+
+        if (
+            !payload ||
+            typeof payload.public_id !== "string" ||
+            !payload.public_id.startsWith("ouistream/")
+        ) {
+            return res.status(400).json({
+                error: "Invalid Cloudinary notification"
+            })
+        }
+
+        const videoId = payload.public_id.slice("ouistream/".length)
+
+        if (
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(videoId)
+        ) {
+            return res.status(400).json({
+                error: "Invalid video ID"
+            })
+        }
+
+        const eagerResults = Array.isArray(payload.eager)
+            ? payload.eager
+            : []
+
+        const hlsResult = eagerResults.find(result =>
+            result &&
+            (
+                result.format === "m3u8" ||
+                result.secure_url?.toLowerCase().includes(".m3u8") ||
+                result.url?.toLowerCase().includes(".m3u8")
+            )
+        )
+
+        const hlsUrl = hlsResult?.secure_url || hlsResult?.url || null
+
+        if (hlsUrl && /^https:\/\/res\.cloudinary\.com\//i.test(hlsUrl)) {
+            const { error: updateError } = await adminSupabase
+                .from("videos")
+                .update({
+                    stream_path: hlsUrl,
+                    status: "ready"
+                })
+                .eq("id", videoId)
+
+            if (updateError) {
+                console.error("Webhook video update error:", updateError)
+
+                return res.status(500).json({
+                    error: "Could not update video"
+                })
+            }
+
+            console.log(`Video ${videoId} processing completed`)
+
+            return res.json({
+                status: "ready",
+                videoId
+            })
+        }
+
+        const eagerFailed = eagerResults.some(result =>
+            result?.status === "failed" ||
+            result?.status === "error" ||
+            result?.error
+        )
+
+        if (eagerFailed || payload.error) {
+            const { error: updateError } = await adminSupabase
+                .from("videos")
+                .update({
+                    status: "failed"
+                })
+                .eq("id", videoId)
+
+            if (updateError) {
+                console.error("Webhook failure update error:", updateError)
+
+                return res.status(500).json({
+                    error: "Could not update failed video"
+                })
+            }
+
+            console.error("Cloudinary processing failed:", {
+                videoId,
+                error: payload.error || eagerResults
+                    .filter(result => result?.error)
+                    .map(result => result.error)
+            })
+
+            return res.json({
+                status: "failed",
+                videoId
+            })
+        }
+
+        console.warn("Cloudinary webhook received without an HLS result:", {
+            videoId,
+            notificationType: payload.notification_type
+        })
+
+        return res.status(202).json({
+            status: "pending",
+            videoId
+        })
+    } catch (error) {
+        console.error("Cloudinary webhook error:", {
+            name: error?.name,
+            message: error?.message
+        })
+
+        res.status(500).json({
+            error: "Could not process Cloudinary notification"
         })
     }
 })

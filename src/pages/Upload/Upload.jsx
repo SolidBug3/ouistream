@@ -15,6 +15,43 @@ import PersonSelector from "./PersonSelector.jsx"
 import GenreSelector from "./GenreSelector.jsx"
 import useUploadText from "./useUploadText"
 
+const processingInterval = 3000
+const processingTimeout = 45 * 60 * 1000
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+async function waitForVideoReady(videoId) {
+    const startedAt = Date.now()
+
+    while (Date.now() - startedAt < processingTimeout) {
+        const { data: video, error } = await supabase
+            .from("videos")
+            .select("status, stream_path")
+            .eq("id", videoId)
+            .maybeSingle()
+
+        if (error) throw error
+
+        if (!video) {
+            throw new Error("Video record could not be found")
+        }
+
+        if (video.status === "ready" && video.stream_path) {
+            return video
+        }
+
+        if (video.status === "failed") {
+            throw new Error("Cloudinary failed to process this video")
+        }
+
+        await delay(processingInterval)
+    }
+
+    throw new Error("Video processing is taking longer than expected. You can retry checking its status.")
+}
+
 function Upload() {
     const texts = useUploadText()
     const navigate = useNavigate()
@@ -33,8 +70,10 @@ function Upload() {
     const [invalid, setInvalid] = useState(false)
     const [uploading, setUploading] = useState(false)
     const [progress, setProgress] = useState(0)
+    const [uploadStage, setUploadStage] = useState("uploading")
     const [complete, setComplete] = useState(false)
     const [uploadError, setUploadError] = useState("")
+    const [pendingVideoId, setPendingVideoId] = useState(null)
 
     useEffect(() => {
         if (window.innerWidth <= 900) {
@@ -141,31 +180,55 @@ function Upload() {
     }
 
     async function submitUpload(event) {
-        const valid = handleUploadSubmit(event, video, title, thumbnail)
-        setInvalid(!valid)
+        event.preventDefault()
 
-        if (!valid || !loggedUser?.id || uploading) return
+        if (uploading) return
+
+        if (!pendingVideoId) {
+            const valid = handleUploadSubmit(event, video, title, thumbnail)
+            setInvalid(!valid)
+
+            if (!valid || !loggedUser?.id) return
+        }
 
         setUploading(true)
         setUploadError("")
-        setProgress(0)
 
         try {
-            await uploadVideo({
-                userId: loggedUser.id,
-                video,
-                thumbnail,
-                title,
-                description,
-                actors,
-                producers,
-                genres: selectedGenres.filter(Boolean),
-                onProgress: setProgress
-            })
+            let videoId = pendingVideoId
+
+            if (!videoId) {
+                setProgress(0)
+                setUploadStage("uploading")
+
+                videoId = await uploadVideo({
+                    userId: loggedUser.id,
+                    video,
+                    thumbnail,
+                    title,
+                    description,
+                    actors,
+                    producers,
+                    genres: selectedGenres.filter(Boolean),
+                    onProgress: ({ stage, progress: nextProgress }) => {
+                        setUploadStage(stage)
+
+                        if (typeof nextProgress === "number") {
+                            setProgress(nextProgress)
+                        }
+                    }
+                })
+
+                setPendingVideoId(videoId)
+            }
+
+            setUploadStage("processing")
+
+            await waitForVideoReady(videoId)
 
             setProgress(100)
             setComplete(true)
-            setTimeout(() => navigate("/profile"), 1500)
+            navigate(`/video/${videoId}`)
         } catch (error) {
             const details = [
                 error?.message,
@@ -186,10 +249,20 @@ function Upload() {
                 error
             })
 
+            if (error?.message === "Cloudinary failed to process this video") {
+                setPendingVideoId(null)
+            }
+
             setUploadError(details || "Unknown upload error")
         } finally {
             setUploading(false)
         }
+    }
+
+    const stageTitle = {
+        uploading: "Uploading video to Filebase",
+        saving: "Saving video information",
+        processing: "Processing video with Cloudinary"
     }
 
     return (
@@ -204,16 +277,32 @@ function Upload() {
                     ) : (
                         <>
                             <div className="Upload-progress-icon">🎬</div>
-                            <h2>{texts.uploading}</h2>
-                            <div className="Upload-progress-bar">
+                            <h2>{stageTitle[uploadStage] || texts.uploading}</h2>
+
+                            <div className={`Upload-progress-bar ${uploadStage === "processing" ? "processing" : ""}`}>
                                 <div
-                                    className="Upload-progress-fill"
-                                    style={{ width: `${progress}%` }}
+                                    className={`Upload-progress-fill ${uploadStage === "processing" ? "indeterminate" : ""}`}
+                                    style={{
+                                        width: uploadStage === "processing"
+                                            ? "35%"
+                                            : `${progress}%`
+                                    }}
                                 />
                             </div>
-                            <span className="Upload-progress-percent">
-                                {Math.floor(progress)}%
-                            </span>
+
+                            {uploadStage === "uploading" ? (
+                                <span className="Upload-progress-percent">
+                                    {Math.floor(progress)}%
+                                </span>
+                            ) : uploadStage === "saving" ? (
+                                <span className="Upload-progress-percent">
+                                    Saving details...
+                                </span>
+                            ) : (
+                                <span className="Upload-progress-percent">
+                                    Preparing your video for playback...
+                                </span>
+                            )}
                         </>
                     )}
                 </div>
@@ -223,6 +312,16 @@ function Upload() {
                         <div className="Upload-error">
                             <div>{texts.failed}</div>
                             <span>{uploadError}</span>
+
+                            {pendingVideoId && (
+                                <button
+                                    type="submit"
+                                    className="Upload-person-add"
+                                    disabled={uploading}
+                                >
+                                    Check processing again
+                                </button>
+                            )}
                         </div>
                     )}
 
@@ -247,6 +346,7 @@ function Upload() {
                                 handleVideo(event, setVideo)
                                 setInvalid(false)
                                 setUploadError("")
+                                setPendingVideoId(null)
                             }}
                         />
                     </div>
@@ -261,6 +361,7 @@ function Upload() {
                                 setTitle(event.target.value)
                                 setInvalid(false)
                                 setUploadError("")
+                                setPendingVideoId(null)
                             }}
                         />
                     </label>
@@ -373,6 +474,7 @@ function Upload() {
                                 handleThumbnail(event, setThumbnail, setThumbnailUrl)
                                 setInvalid(false)
                                 setUploadError("")
+                                setPendingVideoId(null)
                             }}
                         />
                     </label>
@@ -382,7 +484,7 @@ function Upload() {
                         type="submit"
                         disabled={uploading}
                     >
-                        {texts.publish}
+                        {pendingVideoId ? "Check processing again" : texts.publish}
                     </button>
                 </form>
             )}

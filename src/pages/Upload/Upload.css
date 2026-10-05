@@ -332,6 +332,7 @@
 }
 
 .Upload-progress-bar {
+    position: relative;
     width: 100%;
     height: 10px;
     overflow: hidden;
@@ -344,6 +345,26 @@
     border-radius: 10px;
     background: #2196f3;
     transition: width 0.2s ease;
+}
+
+    .Upload-progress-bar.processing .Upload-progress-fill,
+    .Upload-progress-fill.indeterminate {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 35%;
+        background: linear-gradient(90deg, #2196f3, #70c5ff, #2196f3);
+        animation: Upload-processing 1.5s ease-in-out infinite;
+    }
+
+@keyframes Upload-processing {
+    0% {
+        transform: translateX(-110%);
+    }
+
+    100% {
+        transform: translateX(310%);
+    }
 }
 
 .Upload-progress-percent {

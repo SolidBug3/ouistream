@@ -64,6 +64,37 @@ async function uploadToFilebase(file, kind, onProgress = () => { }) {
     return key
 }
 
+async function startCloudinaryProcessing(videoId, sourceKey) {
+    const {
+        data: { session },
+        error: sessionError
+    } = await supabase.auth.getSession()
+
+    if (sessionError || !session) {
+        throw sessionError || new Error("Not authenticated")
+    }
+
+    const response = await fetch(`${backendUrl}/api/process-video`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+            videoId,
+            sourceKey
+        })
+    })
+
+    const result = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+        throw new Error(result.error || "Could not start Cloudinary processing")
+    }
+
+    return result
+}
+
 async function uploadVideo({
     userId,
     video,
@@ -94,7 +125,13 @@ async function uploadVideo({
     let genresInserted = false
 
     try {
-        videoPath = await uploadToFilebase(video, "video", onProgress)
+        onProgress({ stage: "uploading", progress: 0 })
+
+        videoPath = await uploadToFilebase(video, "video", progress => {
+            onProgress({ stage: "uploading", progress })
+        })
+
+        onProgress({ stage: "saving", progress: 100 })
 
         const { error: thumbnailError } = await supabase.storage
             .from("thumbnails")
@@ -199,9 +236,15 @@ async function uploadVideo({
             genresInserted = true
         }
 
+        onProgress({ stage: "processing", progress: null })
+
+        const processingResult = await startCloudinaryProcessing(videoId, videoPath)
+
+        console.log("Cloudinary processing started:", processingResult)
+
         return videoId
     } catch (error) {
-        console.error("Upload database operation failed:", {
+        console.error("Upload operation failed:", {
             message: error?.message,
             code: error?.code,
             details: error?.details,
